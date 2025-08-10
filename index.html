@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <link rel="stylesheet" href="main.css">
+    <style>
+        body {
+            transition: background 1s ease-in-out;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-r from-blue-500 to-purple-600 w-full h-screen">
+    <div class="container w-[40vw] m-auto bg-[#333] py-[20px] px-3 rounded-lg shadow-lg backdrop-blur-lg flex flex-col items-center justify-center max-w-[900px] min-w-[500px]"
+        id="wholeContainer">
+
+        <h1 class="text-white animate-bounce text-3xl" id="wholeHeading">Expense Tracker</h1>
+
+        <!-- Amount Input -->
+        <div class="amount mt-4">
+            <input type="number" id="inputAmount" class="px-[10px] py-[12px] rounded-lg shadow-lg w-[440px]"
+                placeholder="Enter Amount">
+        </div>
+
+        <!-- Add Expense Category -->
+        <div class="category mt-4">
+            <input type="text" id="inputCategory" class="px-[10px] py-[12px] rounded-lg shadow-lg w-[440px] relative"
+                placeholder="Enter Category" readonly>
+            <select id="categoryList"
+                class="absolute ml-[-125px] mt-[3.5px] px-[16px] py-[14.5px] bg-black text-white cursor-pointer">
+                <option value="food">Food</option>
+                <option value="sports">Sports</option>
+                <option value="transport">Transport</option>
+                <option value="jewellery">Jewellery</option>
+                <option value="others">Others</option>
+            </select>
+        </div>
+
+        <!-- Filter by Category -->
+        <div class="filterCategory mt-4">
+            <input type="text" id="filterCategoryInput"
+                class="px-[10px] py-[12px] rounded-lg shadow-lg w-[440px] relative"
+                placeholder="Filter Products By Category | e.g: food" readonly>
+            <select id="filterCategoryList"
+                class="absolute ml-[-125px] mt-[3.5px] px-[16.2px] py-[14.5px] bg-black text-white cursor-pointer">
+                <option value="food">Food</option>
+                <option value="sports">Sports</option>
+                <option value="transport">Transport</option>
+                <option value="jewellery">Jewellery</option>
+                <option value="others">Others</option>
+            </select>
+        </div>
+
+        <div class="mt-4">
+            <button type="button"
+                class="px-4 py-2 text-center text-white bg-red-700 active:bg-red-500 rounded-lg shadow-lg duration-300"
+                id="addExpenseBtn">
+                Add Expense
+            </button>
+        </div>
+
+        <div class="allExpenses mt-4 flex flex-col gap-4" id="allExpense"></div>
+
+        <div class="totalPrice mt-4" id="totalPrice"></div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const inputAmountBox = document.getElementById('inputAmount');
+            const inputCategoryBox = document.getElementById('inputCategory');
+            const categoryList = document.getElementById('categoryList');
+            const filterCategoryInputBox = document.getElementById('filterCategoryInput');
+            const filterCategoryList = document.getElementById('filterCategoryList');
+            const addExpenseButton = document.getElementById('addExpenseBtn');
+            const allExpense = document.getElementById('allExpense');
+            const totalPrice = document.getElementById('totalPrice');
+            const container = document.getElementById('wholeContainer');
+
+            let expense = [];
+            let price = 0; // ✅ running total
+
+            // Update category input
+            categoryList.addEventListener('change', () => {
+                inputCategoryBox.value = categoryList.options[categoryList.selectedIndex].text;
+            });
+
+            // Update filter input
+            filterCategoryList.addEventListener('change', () => {
+                filterCategoryInputBox.value = filterCategoryList.options[filterCategoryList.selectedIndex].text;
+            });
+
+            // Color effects
+            function changeColor() {
+                const colors = ['#3572d4', '#35acd4', '#358cd4', '#733799', '#87d48e', '#d48792', '#e0142f'];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                [inputAmountBox, inputCategoryBox, filterCategoryInputBox].forEach(el => {
+                    el.style.border = `5px solid ${randomColor}`;
+                    el.style.color = randomColor;
+                });
+            }
+
+            function changeBackgroundColor() {
+                const gradients = [
+                    "radial-gradient(circle, #FF512F, #F09819)",
+                    "radial-gradient(circle, #00C9FF, #92FE9D)",
+                    "radial-gradient(circle, #6A11CB, #2575FC)",
+                    "radial-gradient(circle, #FEE140, #FA709A)",
+                    "radial-gradient(circle, #232526, #414345)",
+                    "radial-gradient(circle, #FF9A9E, #FAD0C4)",
+                    "radial-gradient(circle, #348F50, #56B4D3)",
+                    "radial-gradient(circle, #141E30, #243B55)"
+                ];
+                document.body.style.background = gradients[Math.floor(Math.random() * gradients.length)];
+                container.style.background = gradients[Math.floor(Math.random() * gradients.length)];
+            }
+
+            changeBackgroundColor();
+            setInterval(changeBackgroundColor, 2000);
+            changeColor();
+            setInterval(changeColor, 3000);
+
+            // ✅ Update total with running price
+            function updateTotal() {
+                if (price > 0) {
+                    totalPrice.style.display = 'block';
+                    totalPrice.innerHTML = `<h2 class="text-center text-white text-3xl font-semibold">Total: ₹${price}</h2>`;
+                } else {
+                    totalPrice.style.display = 'none';
+                }
+            }
+
+            // ✅ Filter expenses by category & show category total
+            filterCategoryList.addEventListener('change', () => {
+                const selectedCategory = filterCategoryList.value.toLowerCase();
+                let categoryTotal = 0;
+
+                document.querySelectorAll(".expense").forEach((expenseDiv, index) => {
+                    const expenseCategory = expense[index].Category.toLowerCase();
+
+                    if (expenseCategory === selectedCategory) {
+                        expenseDiv.style.display = "flex";
+                        categoryTotal += Number(expense[index].Price);
+                    } else {
+                        expenseDiv.style.display = "none";
+                    }
+                });
+
+                // Show total of selected category
+                if (categoryTotal > 0) {
+                    totalPrice.style.display = 'block';
+                    totalPrice.innerHTML = `<h2 class="text-center text-white text-3xl font-semibold">Total for ${selectedCategory}: ₹${categoryTotal}</h2>`;
+                } else {
+                    totalPrice.style.display = 'none';
+                }
+            });
+
+
+            // ✅ Delete function (updates price)
+            function attachDeleteLogic() {
+                document.querySelectorAll(".delete").forEach((btn, index) => {
+                    btn.onclick = () => {
+                        price -= Number(expense[index].Price); // subtract deleted item
+                        expense.splice(index, 1);
+                        localStorage.setItem("expense", JSON.stringify(expense));
+                        btn.closest(".expense").remove();
+                        updateTotal();
+                    };
+                });
+            }
+
+            // ✅ Add expense
+            const addExpense = () => {
+                if (!inputAmountBox.value.trim() || !inputCategoryBox.value.trim()) {
+                    alert("Amount or Category is blank!");
+                    return;
+                }
+                const expenseDetails = {
+                    Category: inputCategoryBox.value.trim(),
+                    Price: inputAmountBox.value.trim()
+                };
+                expense.push(expenseDetails);
+                price += Number(expenseDetails.Price); // add to running total
+
+                const singleExpense = document.createElement("div");
+                singleExpense.classList.add("expense");
+                singleExpense.innerHTML = `
+            <div class="text-white">Item ${expense.length} - ${expenseDetails.Category}</div>
+            <div class="text-white">₹${expenseDetails.Price}</div>
+            <div>
+                <button class="delete bg-red-700 text-white px-4 py-2 rounded-lg shadow-lg active:bg-red-600 duration-300">Delete</button>
+            </div>`;
+                allExpense.appendChild(singleExpense);
+                allExpense.style.display = 'flex';
+
+                localStorage.setItem("expense", JSON.stringify(expense));
+                attachDeleteLogic();
+                updateTotal();
+            };
+
+
+            addExpenseButton.addEventListener('click', addExpense);
+
+            // ✅ Load saved expenses on reload and set price
+            const savedExpenses = JSON.parse(localStorage.getItem("expense")) || [];
+            if (savedExpenses.length > 0) {
+                expense = savedExpenses;
+                allExpense.style.display = 'flex';
+                savedExpenses.forEach((exp, index) => {
+                    price += Number(exp.Price); // set initial total
+                    const singleExpense = document.createElement("div");
+                    singleExpense.classList.add("expense");
+                    singleExpense.innerHTML = `
+                <div class="text-white">Item ${index + 1} - ${exp.Category}</div>
+                <div class="text-white">₹${exp.Price}</div>
+                <div>
+                    <button class="delete bg-red-700 text-white px-4 py-2 rounded-lg shadow-lg active:bg-red-600 duration-300">Delete</button>
+                </div>`;
+                    allExpense.appendChild(singleExpense);
+                });
+                attachDeleteLogic();
+                updateTotal();
+            }
+        });
+    </script>
+
+</body>
+
+</html>
